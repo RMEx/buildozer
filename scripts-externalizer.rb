@@ -159,7 +159,7 @@ module Externalizer
   def externalize
     @dir = ['Scripts']
     @list = Hash.new
-    msg = "The folder \"Scripts\" allready exist, do you want to override it?"
+    msg = "The folder \"Scripts\" allready exist, do you want to overwrite it?"
     cp = Prompt.yes_no_cancel?("Externalization", msg)
     if cp == :yes
       FileTools.safe_rmdir @dir[0]
@@ -169,7 +169,7 @@ module Externalizer
     end
     @list.each do |path, list|
       list.map! {|n| '"' + n + '"'}
-      FileTools.write(path + "/list.rb", list.join(",\n"))
+      FileTools.write(path + "/_list.rb", list.join(",\n"))
     end
   end
 
@@ -182,20 +182,35 @@ module Externalizer
   def is_category?(s)
     if s[1].include?('▼')
       name = s[1].delete('▼').strip
-      @list[@dir[0]] ||= []
-      @list[@dir[0]] << name + "/"
-      @dir = [@dir[0]] << name
+      @dir = [@dir[0]]
+      add_category(@dir[0], name)
     elsif s[1].include?('■')
       eval_depth(s[1])
       name = s[1].delete('■').strip
-      @list[@dir.join "/"] ||= []
-      @list[@dir.join "/"] << name + "/"
-      @dir << name
+      add_category(@dir.join("/"), name)
     else
       return false
     end
     Dir.mkdir @dir.join "/"
     return true
+  end
+
+  def add_category(path, name)
+    @list[path] ||= []
+    if (nb = @list[path].count(name + "/")) > 0
+      name = name + " (#{nb + 1})"
+    end
+    @list[path] << name + "/"
+    @dir << name
+  end
+
+  def add_script(path, name)
+    @list[path] ||= []
+    if (nb = @list[path].count(name)) > 0
+      name = name + " (#{nb + 1})"
+    end
+    @list[path] << name
+    name
   end
 
   def eval_depth(name)
@@ -208,9 +223,9 @@ module Externalizer
   def write_script(s)
     eval_depth(s[1])
     name = s[1].strip
-    @list[@dir.join "/"] ||= []
-    @list[@dir.join "/"] << name
-    FileTools.write("#{@dir.join("/")}/#{name}.rb", s[2])
+    path = @dir.join "/"
+    name = add_script(path, name)
+    FileTools.write(path + "/" + name + ".rb", s[2])
   end
 
 end
