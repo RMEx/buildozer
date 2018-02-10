@@ -13,33 +13,43 @@
 #==============================================================================
 
 module FileTools
-
-  CopyFile = Win32API.new('kernel32', 'CopyFile', 'PPI', 'I')
-
+  #--------------------------------------------------------------------------
+  # * Extend self
+  #--------------------------------------------------------------------------
   extend self
-
+  #--------------------------------------------------------------------------
+  # * Win32API
+  #--------------------------------------------------------------------------
+  CopyFile = Win32API.new('kernel32', 'CopyFile', 'PPI', 'I')
+  #--------------------------------------------------------------------------
+  # * Write a file
+  #--------------------------------------------------------------------------
   def write(file, str, flag = "w+")
     File.open(file, flag) {|f| f.write(str)}
   end
-
+  #--------------------------------------------------------------------------
+  # * Read a file
+  #--------------------------------------------------------------------------
   def read(file)
     File.open(file, 'r') { |f| f.read }
   end
-
+  #--------------------------------------------------------------------------
+  # * Copy a file
+  #--------------------------------------------------------------------------
   def copy(src, dst)
-    k = read(src)
-    write(dst, k)
-  end
-
-  def overkill_copy(src, dst)
     CopyFile.call(src,dst,0)
   end
-
-  def move(src, dst)
-    copy(src, dst)
-    File.delete(src)
+  #--------------------------------------------------------------------------
+  # * Create a folder
+  #--------------------------------------------------------------------------
+  def safe_mkdir(d)
+    unless Dir.exist?(d)
+      Dir.mkdir(d)
+    end
   end
-
+  #--------------------------------------------------------------------------
+  # * Remove a folder
+  #--------------------------------------------------------------------------
   def safe_rmdir(d, v=false)
     if Dir.exist?(d)
       begin delete_all(d)
@@ -47,7 +57,9 @@ module FileTools
       end
     end
   end
-
+  #--------------------------------------------------------------------------
+  # * Delete all folders
+  #--------------------------------------------------------------------------
   def delete_all(dir)
     Dir.foreach(dir) do |e|
       next if [".",".."].include? e
@@ -60,41 +72,11 @@ module FileTools
     end
     Dir.delete(dir)
   end
-
-  def safe_mkdir(d)
-    unless Dir.exist?(d)
-      Dir.mkdir(d)
-    end
-  end
-
+  #--------------------------------------------------------------------------
+  # * Eval a file
+  #--------------------------------------------------------------------------
   def eval_file(f)
     return eval(read(f))
-  end
-
-  def remove_recursive(dir, verbose=false)
-    return unless Dir.exist?(dir)
-    d = Dir.glob(dir + '/*')
-    if d.length > 0
-      d.each do |entry|
-        if File.directory?(entry)
-          remove_recursive(entry)
-        else
-          File.delete(entry)
-          puts "Suppress #{entry}" if verbose
-        end
-      end
-    else
-      begin
-        Dir.rmdir(dir)
-        puts "Suppress #{dir}" if verbose
-      rescue Errno::ENOTEMPTY
-      end
-    end
-    begin
-      Dir.rmdir(dir)
-      puts "Suppress #{dir}" if verbose
-    rescue Errno::ENOTEMPTY
-    end
   end
 end
 
@@ -109,6 +91,9 @@ module Prompt
   # * Extend self
   #--------------------------------------------------------------------------
   extend self
+  #--------------------------------------------------------------------------
+  # * Win32API
+  #--------------------------------------------------------------------------
   FindWindow = Win32API.new('user32', 'FindWindow', 'pp', 'i')
   MessageBox = Win32API.new('user32','MessageBox','lppl','i')
   HWND = FindWindow.call('RGSS Player', 0)
@@ -137,25 +122,42 @@ end
 #==============================================================================
 
 module Externalizer
+  #--------------------------------------------------------------------------
+  # * Extend self
+  #--------------------------------------------------------------------------
   extend self
+  #--------------------------------------------------------------------------
+  # * Run externalization
+  #--------------------------------------------------------------------------
   def run
     open_rvdata2
     externalize
+    rewrite_rvdata2
+    p "ok"
   end
-
+  #--------------------------------------------------------------------------
+  # * Open Scripts.rvdata2
+  #--------------------------------------------------------------------------
   def open_rvdata2
     @scripts = load_data 'Data/Scripts.rvdata2'
     n = 1
     @scripts.each do |script|
+      p script[0]
       script[2] = Zlib::Inflate.inflate script[2]
-      script[2] = script[2].split("\r").join("")
+      script[2] = script[2].split("\r")
+      if script[2][0] && script[2][0] != "# -*- coding: utf-8 -*-"
+        script[2] = script[2].insert(0, "# -*- coding: utf-8 -*-\n")
+      end
+      script[2] = script[2].join("")
       if script[1] == "" && script[2] != ""
         script[1] = "untitled (#{n})"
         n += 1
       end
     end
   end
-  
+  #--------------------------------------------------------------------------
+  # * Externalize the scripts
+  #--------------------------------------------------------------------------
   def externalize
     @dir = ['Scripts']
     @list = Hash.new
@@ -172,13 +174,17 @@ module Externalizer
       FileTools.write(path + "/_list.rb", list.join(",\n"))
     end
   end
-
+  #--------------------------------------------------------------------------
+  # * Externalize one script
+  #--------------------------------------------------------------------------
   def externalize_script(s)
     return if is_category? s
     return if s[2] == ""
     write_script(s)
   end
-
+  #--------------------------------------------------------------------------
+  # * Check if the script is a category
+  #--------------------------------------------------------------------------
   def is_category?(s)
     if s[1].include?('▼')
       name = s[1].delete('▼').strip
@@ -194,7 +200,9 @@ module Externalizer
     Dir.mkdir @dir.join "/"
     return true
   end
-
+  #--------------------------------------------------------------------------
+  # * Add a category into the list
+  #--------------------------------------------------------------------------
   def add_category(path, name)
     @list[path] ||= []
     if (nb = @list[path].count(name + "/")) > 0
@@ -203,7 +211,9 @@ module Externalizer
     @list[path] << name + "/"
     @dir << name
   end
-
+  #--------------------------------------------------------------------------
+  # * Add a script into the list
+  #--------------------------------------------------------------------------
   def add_script(path, name)
     @list[path] ||= []
     if (nb = @list[path].count(name)) > 0
@@ -212,20 +222,47 @@ module Externalizer
     @list[path] << name
     name
   end
-
+  #--------------------------------------------------------------------------
+  # * Eval the depth of the script or repertory (tree)
+  #--------------------------------------------------------------------------
   def eval_depth(name)
     depth = (name.length - name.lstrip.length) / 3 + 2
     if depth < @dir.length
       (@dir.length - depth).times {@dir.pop}
     end
   end
-
+  #--------------------------------------------------------------------------
+  # * Write a script file (.rb)
+  #--------------------------------------------------------------------------
   def write_script(s)
     eval_depth(s[1])
     name = s[1].strip
     path = @dir.join "/"
     name = add_script(path, name)
     FileTools.write(path + "/" + name + ".rb", s[2])
+  end
+  #--------------------------------------------------------------------------
+  # * Rewrite the rvdata2
+  #--------------------------------------------------------------------------
+  def rewrite_rvdata2
+    time = Time.now.strftime("%y%m%d-%H%M%S")
+    FileTools.copy("Data/Scripts.rvdata2", "Data/Scripts_backup-#{time}.rvdata2")
+    new_rvdata = [
+      [
+        0, "scripts-loader",
+        deflate("Kernel.send(:load, 'Scripts/scripts-loader')")
+      ]
+    ]
+    save_data(new_rvdata, "Data/Scripts.rvdata2")
+  end
+  #--------------------------------------------------------------------------
+  # * Compress the content
+  #--------------------------------------------------------------------------
+  def deflate(content)
+    docker  = Zlib::Deflate.new(Zlib::BEST_COMPRESSION)
+    data    = docker.deflate(content, Zlib::FINISH)
+    docker.close
+    data
   end
 
 end
