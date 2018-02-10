@@ -98,6 +98,44 @@ module FileTools
   end
 end
 
+#==============================================================================
+# ** Prompt
+#------------------------------------------------------------------------------
+#  Display prompt
+#==============================================================================
+
+module Prompt
+  #--------------------------------------------------------------------------
+  # * Extend self
+  #--------------------------------------------------------------------------
+  extend self
+  FindWindow = Win32API.new('user32', 'FindWindow', 'pp', 'i')
+  MessageBox = Win32API.new('user32','MessageBox','lppl','i')
+  HWND = FindWindow.call('RGSS Player', 0)
+  #--------------------------------------------------------------------------
+  # * Yes no
+  #--------------------------------------------------------------------------
+  def yes_no?(title, message)
+    k = MessageBox.call(HWND, message, title, 305)
+    k == 1
+  end
+  #--------------------------------------------------------------------------
+  # * Yes no cancel
+  #--------------------------------------------------------------------------
+  def yes_no_cancel?(title, message)
+    k = MessageBox.call(HWND, message, title, 3)
+    return :yes if k == 6
+    return :no if k == 7
+    :cancel
+  end
+end
+
+#==============================================================================
+# ** Externalizer
+#------------------------------------------------------------------------------
+#  Externalize all scripts
+#==============================================================================
+
 module Externalizer
   extend self
   def run
@@ -120,9 +158,19 @@ module Externalizer
   
   def externalize
     @dir = ['Scripts']
-    FileTools.safe_rmdir @dir[0]
-    Dir.mkdir @dir[0]
-    @scripts.each {|s| externalize_script(s)}
+    @list = Hash.new
+    msg = "The folder \"Scripts\" allready exist, do you want to override it?"
+    cp = Prompt.yes_no_cancel?("Externalization", msg)
+    if cp == :yes
+      FileTools.safe_rmdir @dir[0]
+      Graphics.update while Dir.exist?(@dir[0])
+      Dir.mkdir @dir[0]
+      @scripts.each {|s| externalize_script(s)}
+    end
+    @list.each do |path, list|
+      list.map! {|n| '"' + n + '"'}
+      FileTools.write(path + "/list.rb", list.join(",\n"))
+    end
   end
 
   def externalize_script(s)
@@ -133,10 +181,16 @@ module Externalizer
 
   def is_category?(s)
     if s[1].include?('▼')
-      @dir = [@dir[0]] << s[1].delete('▼').strip
+      name = s[1].delete('▼').strip
+      @list[@dir[0]] ||= []
+      @list[@dir[0]] << name + "/"
+      @dir = [@dir[0]] << name
     elsif s[1].include?('■')
       eval_depth(s[1])
-      @dir << s[1].delete('■').strip
+      name = s[1].delete('■').strip
+      @list[@dir.join "/"] ||= []
+      @list[@dir.join "/"] << name + "/"
+      @dir << name
     else
       return false
     end
@@ -153,8 +207,10 @@ module Externalizer
 
   def write_script(s)
     eval_depth(s[1])
-    s[1].strip!
-    FileTools.write("#{@dir.join("/")}/#{s[1]}.rb", s[2])
+    name = s[1].strip
+    @list[@dir.join "/"] ||= []
+    @list[@dir.join "/"] << name
+    FileTools.write("#{@dir.join("/")}/#{name}.rb", s[2])
   end
 
 end
