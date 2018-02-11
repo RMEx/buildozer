@@ -173,7 +173,7 @@ The **scripts-compiler** works even if you externalized ALL scripts. :)
 
 ## Compile your scripts before releasing your game!
 
-You will notice the game will start after few seconds (2~3) if your scripts are compiled. It's not a problem since you save A LOT of time by editing external scripts instead of internal scripts. But when you don't work on your scripts or when you want to release your game, I recommand you to compile your scripts to avoid those few little seconds lost.
+You will notice the game will start after few seconds (2~3) if your scripts are externalized... It's not a problem since you save A LOT of time by editing external scripts instead of internal scripts. But when you don't work on your scripts or when you want to release your game, I recommand you to compile your scripts to avoid those few little seconds lost.
 
 ***
 # Sample_project_1 and Sample_project_2
