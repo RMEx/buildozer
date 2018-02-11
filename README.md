@@ -169,6 +169,6 @@ The **scripts-compiler** works even if you externalized ALL scripts. :)
 ## Security
 
 * A backup of the Scripts.rvdata2 is created
-* The "**Scripts**" folder is useless then, but not deleted, you habe to delete it by yourself if everything is fine
+* The "**Scripts**" folder is now useless, but not deleted, you have to delete it by yourself if everything is fine
 
 That's all, folks!
