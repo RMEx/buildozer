@@ -171,6 +171,10 @@ The **scripts-compiler** works even if you externalized ALL scripts. :)
 * A backup of the Scripts.rvdata2 is created
 * The "**Scripts**" folder is now useless, but not deleted, you have to delete it by yourself if everything is fine
 
+## Compile your scripts before releasing your game!
+
+You will notice the game will start after few seconds (2~3) if your scripts are compiled. It's not a problem since you save A LOT of time by editing external scripts instead of internal scripts. But when you don't work on your scripts or when you want to release your game, I recommand you to compile your scripts to avoid those few little seconds lost.
+
 ***
 # Sample_project_1 and Sample_project_2
 
