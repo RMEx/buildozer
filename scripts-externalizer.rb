@@ -142,7 +142,7 @@ module Externalizer
   def open_rvdata2
     @scripts = load_data 'Data/Scripts.rvdata2'
     n = 1
-    @scripts.each_with_index do |script, i|
+    @scripts.each do |script|
       script[2] = Zlib::Inflate.inflate script[2]
       @ignored = script if script[2].include?("# ** scripts-externalizer")
       script[2] = script[2].split("\r")
@@ -164,7 +164,7 @@ module Externalizer
     msg = "Externalize all scripts to the folder \"Scripts\"?
 
  (a backup for \"Scripts.rvdata2\" will be created in the \"Data\" folder)"
-    cp = Prompt.yes_no_cancel?("Externalization", msg)
+    cp = Prompt.yes_no_cancel?("scripts-externalizer", msg)
     if cp != :yes
       return true
     end

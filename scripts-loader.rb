@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #==============================================================================
-# ** ORMS Converter
+# ** scripts-loader
 #------------------------------------------------------------------------------
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/scripts-externalizer
