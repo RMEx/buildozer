@@ -126,6 +126,8 @@ You can externalize ALL scripts including the default scripts by using the **scr
 
 It will create the "**Scripts**" folder, and make automatically the sub-folders respecting the categories defined by empty scripts like "**▼ Scenes**"
 
+Add "**scripts-externalizer**" into your project:
+
 ![screenshot](http://biloucorp.com/BCW/Joke/sample3.png)
 
 Then launch the game:
