@@ -171,4 +171,10 @@ The **scripts-compiler** works even if you externalized ALL scripts. :)
 * A backup of the Scripts.rvdata2 is created
 * The "**Scripts**" folder is now useless, but not deleted, you have to delete it by yourself if everything is fine
 
-That's all, folks!
+# Sample_project_1 and Sample_project_2
+
+Those projects is the projects I used as example, you can see how the scripts are managed in **Sample_project_1** with the method of **scripts-externalize** all scripts.
+
+You can see how the scripts are managed in **Sample_project_2** with the method of **scripts-loader** that loads just the scripts you want to externalize.
+
+That's all, folks! <3
