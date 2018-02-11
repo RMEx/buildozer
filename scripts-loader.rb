@@ -3,7 +3,7 @@
 # ** ORMS Converter
 #------------------------------------------------------------------------------
 # By Joke @biloumaster <joke@biloucorp.com>
-# GitHub: https://github.com/RMEx/OLD_RM_STYLE
+# GitHub: https://github.com/RMEx/scripts-externalizer
 #------------------------------------------------------------------------------
 # Loads all scripts in the Scripts folder
 #
