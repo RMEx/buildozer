@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 #==============================================================================
-# ** ORMS Converter
+# ** scripts-externalizer
 #------------------------------------------------------------------------------
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/OLD_RM_STYLE
+#------------------------------------------------------------------------------
+# Externalizes all scripts from Data/Scripts.rvdata2
+# Creates a Scripts folder and load all scripts from it
 #==============================================================================
 
 #==============================================================================
@@ -42,7 +45,7 @@ module FileTools
   #--------------------------------------------------------------------------
   # * Create a folder
   #--------------------------------------------------------------------------
-  def safe_mkdir(d)
+  def mkdir(d)
     unless Dir.exist?(d)
       Dir.mkdir(d)
     end
@@ -50,7 +53,7 @@ module FileTools
   #--------------------------------------------------------------------------
   # * Remove a folder
   #--------------------------------------------------------------------------
-  def safe_rmdir(d, v=false)
+  def rmdir(d, v=false)
     if Dir.exist?(d)
       begin delete_all(d)
       rescue Errno::ENOTEMPTY
@@ -71,12 +74,6 @@ module FileTools
       end
     end
     Dir.delete(dir)
-  end
-  #--------------------------------------------------------------------------
-  # * Eval a file
-  #--------------------------------------------------------------------------
-  def eval_file(f)
-    return eval(read(f))
   end
 end
 
@@ -131,9 +128,13 @@ module Externalizer
   #--------------------------------------------------------------------------
   def run
     open_rvdata2
+    return if cancel
+    return if allready_externalized
+    return if folder_exist
     externalize
     rewrite_rvdata2
-    p "ok"
+    the_end
+    exit
   end
   #--------------------------------------------------------------------------
   # * Open Scripts.rvdata2
@@ -141,9 +142,9 @@ module Externalizer
   def open_rvdata2
     @scripts = load_data 'Data/Scripts.rvdata2'
     n = 1
-    @scripts.each do |script|
-      p script[0]
+    @scripts.each_with_index do |script, i|
       script[2] = Zlib::Inflate.inflate script[2]
+      @ignored = script if script[2].include?("# ** scripts-externalizer")
       script[2] = script[2].split("\r")
       if script[2][0] && script[2][0] != "# -*- coding: utf-8 -*-"
         script[2] = script[2].insert(0, "# -*- coding: utf-8 -*-\n")
@@ -154,6 +155,43 @@ module Externalizer
         n += 1
       end
     end
+    @scripts.delete(@ignored) if @ignored
+  end
+  #--------------------------------------------------------------------------
+  # * Open Scripts.rvdata2
+  #--------------------------------------------------------------------------
+  def cancel
+    msg = "Externalize all scripts to the folder \"Scripts\"?
+
+ (a backup for \"Scripts.rvdata2\" will be created in the \"Data\" folder)"
+    cp = Prompt.yes_no_cancel?("Externalization", msg)
+    if cp != :yes
+      return true
+    end
+    false
+  end
+  #--------------------------------------------------------------------------
+  # * Open Scripts.rvdata2
+  #--------------------------------------------------------------------------
+  def allready_externalized
+    if @scripts.length == 1
+      msgbox "Scripts are allready externalized... operation canceled."
+      return true
+    end
+    false
+  end
+  #--------------------------------------------------------------------------
+  # * Open Scripts.rvdata2
+  #--------------------------------------------------------------------------
+  def folder_exist
+    if Dir.exist?("Scripts")
+      msg = "The folder \"Scripts\" allready exist, do you want to overwrite it?"
+      cp = Prompt.yes_no_cancel?("Externalization", msg)
+      if cp != :yes
+        return true
+      end
+    end
+    false
   end
   #--------------------------------------------------------------------------
   # * Externalize the scripts
@@ -161,18 +199,14 @@ module Externalizer
   def externalize
     @dir = ['Scripts']
     @list = Hash.new
-    msg = "The folder \"Scripts\" allready exist, do you want to overwrite it?"
-    cp = Prompt.yes_no_cancel?("Externalization", msg)
-    if cp == :yes
-      FileTools.safe_rmdir @dir[0]
-      Graphics.update while Dir.exist?(@dir[0])
-      Dir.mkdir @dir[0]
-      @scripts.each {|s| externalize_script(s)}
-    end
+    FileTools.rmdir @dir[0]
+    Graphics.update while Dir.exist?(@dir[0])
+    Dir.mkdir @dir[0]
+    @scripts.each {|s| externalize_script(s)}
     @list.each do |path, list|
-      list.map! {|n| '"' + n + '"'}
-      FileTools.write(path + "/_list.rb", list.join(",\n"))
+      FileTools.write(path + "/_list.rb", list.join("\n"))
     end
+    FileTools.write("Scripts/scripts-loader.rb", scripts_loader)
   end
   #--------------------------------------------------------------------------
   # * Externalize one script
@@ -187,17 +221,21 @@ module Externalizer
   #--------------------------------------------------------------------------
   def is_category?(s)
     if s[1].include?('▼')
-      name = s[1].delete('▼').strip
+      s[1] = s[1].delete('▼').strip
       @dir = [@dir[0]]
-      add_category(@dir[0], name)
+      add_category(@dir[0], s[1])
     elsif s[1].include?('■')
       eval_depth(s[1])
-      name = s[1].delete('■').strip
-      add_category(@dir.join("/"), name)
+      s[1] = s[1].delete('■').strip
+      add_category(@dir.join("/"), s[1])
     else
       return false
     end
     Dir.mkdir @dir.join "/"
+    if s[2] != ""
+      s[1] = " " * ((@dir.length - 2) * 3) + s[1]
+      write_script(s)
+    end
     return true
   end
   #--------------------------------------------------------------------------
@@ -205,7 +243,7 @@ module Externalizer
   #--------------------------------------------------------------------------
   def add_category(path, name)
     @list[path] ||= []
-    if (nb = @list[path].count(name + "/")) > 0
+    if (nb = @list[path].count{|n| n.include?(name)}) > 0
       name = name + " (#{nb + 1})"
     end
     @list[path] << name + "/"
@@ -216,7 +254,7 @@ module Externalizer
   #--------------------------------------------------------------------------
   def add_script(path, name)
     @list[path] ||= []
-    if (nb = @list[path].count(name)) > 0
+    if (nb = @list[path].count{|n| n.include?(name)}) > 0
       name = name + " (#{nb + 1})"
     end
     @list[path] << name
@@ -250,7 +288,7 @@ module Externalizer
     new_rvdata = [
       [
         0, "scripts-loader",
-        deflate("Kernel.send(:load, 'Scripts/scripts-loader')")
+        deflate("Kernel.send(:load, 'Scripts/scripts-loader.rb')")
       ]
     ]
     save_data(new_rvdata, "Data/Scripts.rvdata2")
@@ -264,7 +302,85 @@ module Externalizer
     docker.close
     data
   end
+  #--------------------------------------------------------------------------
+  # * Epic END
+  #--------------------------------------------------------------------------
+  def the_end
+    begin
+      data_system = load_data("Data/System.rvdata2")
+      data_system.battle_end_me.play
+    rescue
+    end
+    msgbox "All scripts externalized to \"Scripts\" folder! \\o/
 
+Now close and open the project again and enjoy your scripts! :)
+
+Thanks you for using this script! <3
+
+BilouMaster Joke"
+  end
+  #--------------------------------------------------------------------------
+  # * Epic string script
+  #--------------------------------------------------------------------------
+  def scripts_loader
+"# -*- coding: utf-8 -*-
+#==============================================================================
+# ** ORMS Converter
+#------------------------------------------------------------------------------
+# By Joke @biloumaster <joke@biloucorp.com>
+# GitHub: https://github.com/RMEx/OLD_RM_STYLE
+#------------------------------------------------------------------------------
+# Loads all scripts in the Scripts folder
+#
+# To add a script: create a newscript.rb in the folder, and add his name
+# in the _list.rb
+#
+# To add a folder: create a new folder, add the name of the folder in _list.rb
+# with a \"/\" to the end of the name, create a new _list.rb in the folder
+#==============================================================================
+
+#==============================================================================
+# ** Loader
+#------------------------------------------------------------------------------
+#  Load all scripts
+#==============================================================================
+
+module Loader 
+  #--------------------------------------------------------------------------
+  # * Extend self
+  #--------------------------------------------------------------------------
+  extend self
+  #--------------------------------------------------------------------------
+  # * Run the loader
+  #--------------------------------------------------------------------------
+  def run
+    read_list(\"Scripts/\")
+  end
+  #--------------------------------------------------------------------------
+  # * Read a file
+  #--------------------------------------------------------------------------
+  def read(file)
+    File.open(file, 'r') { |f| f.read }
+  end
+  #--------------------------------------------------------------------------
+  # * Read a list and load all the elements
+  #--------------------------------------------------------------------------
+  def read_list(path)
+    @list = read(path + \"_list.rb\").split(\"\\n\")
+    @list.each do |e|
+      e.strip!
+      next if e[0] == \"#\"
+      if e[-1] == \"/\"
+        read_list(path + e)
+      else
+        Kernel.send(:load, path + e + \".rb\")
+      end
+    end
+  end
+end
+
+Loader.run"
+  end
 end
 
 Externalizer.run

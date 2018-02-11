@@ -1,0 +1,31 @@
+Game_Temp
+Game_System
+Game_Timer
+Game_Message
+Game_Switches
+Game_Variables
+Game_SelfSwitches
+Game_Screen
+Game_Picture
+Game_Pictures
+Game_BaseItem
+Game_Action
+Game_ActionResult
+Game_BattlerBase
+Game_Battler (2)
+Game_Actor
+Game_Enemy
+Game_Actors
+Game_Unit
+Game_Party
+Game_Troop
+Game_Map
+Game_CommonEvent
+Game_CharacterBase
+Game_Character (2)
+Game_Player
+Game_Follower
+Game_Followers
+Game_Vehicle
+Game_Event
+Game_Interpreter
