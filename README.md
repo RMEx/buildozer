@@ -1,6 +1,6 @@
 [Join us on Discord !](https://discord.gg/yRUZcdQ)
 
-# [![RMEx](http://rmex.github.io/images/rmex-shortcut.png)](http://rmex.github.io) [scripts-externalizer](https://github.com/RMEx/OLD_RM_STYLE/blob/master/OLD_RM_STYLE.rb)
+# [![RMEx](http://rmex.github.io/images/rmex-shortcut.png)](http://rmex.github.io) scripts-externalizer
 > Externalize all scripts from Scripts.rvdata2 (script for RMVXAce)
 >
 > **scripts-externalizer**, **scripts-loader** and **scripts-compiler** allow you to use your favorite IDE instead of the RPG Maker script editor!
