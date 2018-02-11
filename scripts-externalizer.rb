@@ -199,6 +199,7 @@ module Externalizer
   def externalize
     @dir = ['Scripts']
     @list = Hash.new
+    @count = Hash.new
     FileTools.rmdir @dir[0]
     Graphics.update while Dir.exist?(@dir[0])
     Dir.mkdir @dir[0]
@@ -243,8 +244,10 @@ module Externalizer
   #--------------------------------------------------------------------------
   def add_category(path, name)
     @list[path] ||= []
-    if (nb = @list[path].count{|n| n.include?(name)}) > 0
-      name = name + " (#{nb + 1})"
+    if @list[path].include?(name + "/")
+      @count[path + name + "/"] ||= 1
+      @count[path + name + "/"] += 1
+      name = name + " (#{@count[path + name + "/"]})"
     end
     @list[path] << name + "/"
     @dir << name
@@ -254,8 +257,10 @@ module Externalizer
   #--------------------------------------------------------------------------
   def add_script(path, name)
     @list[path] ||= []
-    if (nb = @list[path].count{|n| n.include?(name)}) > 0
-      name = name + " (#{nb + 1})"
+    if @list[path].include?(name)
+      @count[path + name] ||= 1
+      @count[path + name] += 1
+      name = name + " (#{@count[path + name]})"
     end
     @list[path] << name
     name
