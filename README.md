@@ -10,8 +10,6 @@ TODO:
 - [x] scripts-loader
 - [ ] scripts-compiler
 
----
-
 ***
 ## About using the default script editor
 
