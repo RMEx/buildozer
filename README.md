@@ -5,11 +5,6 @@
 >
 > **scripts-externalizer**, **scripts-loader** and **scripts-compiler** allow you to use your favorite IDE instead of the RPG Maker script editor!
 
-TODO:
-- [x] scripts-externalizer
-- [x] scripts-loader
-- [ ] scripts-compiler
-
 ***
 ## About using the default script editor
 
@@ -47,7 +42,7 @@ I propose to use those functions smartly, by using my scripts!
 
 * Externalize just the scripts you want with **scripts-loader**
 * Externalize all scripts including the default scripts with **scripts-externalizer**
-* Compiling the external scripts into the Scripts.rvdata2 (coming soon)
+* Compiling the external scripts into the Scripts.rvdata2 with **scripts-compiler**
 ***
 # Externalize just the scripts you want
 
@@ -69,7 +64,7 @@ orms
 ```
 Those two scripts will be loaded at the same time of **scripts-loader**
 
-If you want to **deactivate** Fullscreen++, just put a "**#**" above the name:
+If you want to **deactivate** Fullscreen++, just put a "**#**" in front of the name:
 ```
 #Fullscreen++
 orms
@@ -154,8 +149,26 @@ Don't worry, you will retrieve all the scripts in your favorite IDE :) :
 * The scripts with no name will be also exported and named "untitled", "untitled (2)" and so on
 * The scripts with the same name will be renamed "script (2)", script (3)" and so on
 
-That's all, folks!
 
 # Compiling the external scripts into the Scripts.rvdata2
 
-Coming soon... :)
+You can use the **scripts-compiler** to compile the content of your "**Scripts**" folder into the "**Scripts.rvdata2**"
+
+Just add the "**scripts-compiler**" in your scripts (replace the "**scripts-loader**" you used):
+
+![screenshot](http://biloucorp.com/BCW/Joke/sample8.png)
+
+Launch the game, then close/open the project, and VOILA:
+
+![screenshot](http://biloucorp.com/BCW/Joke/sample9.png)
+
+You can see the sub-folder is represented by the character "■" in front of the name. The "**scripts-externalizer**" understand those characters and creates the sub-folders corresponding!
+
+The **scripts-compiler** works even if you externalized ALL scripts. :)
+
+## Security
+
+* A backup of the Scripts.rvdata2 is created
+* The "**Scripts**" folder is useless then, but not deleted, you habe to delete it by yourself if everything is fine
+
+That's all, folks!
