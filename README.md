@@ -62,7 +62,7 @@ For example:
 
 ![screenshot](http://biloucorp.com/BCW/Joke/sample1.png)
 
-Into the "**_list.rb**, there is just:
+Into the "**_list.rb**", there is just:
 ```
 Fullscreen++
 orms
