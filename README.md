@@ -43,7 +43,7 @@ I propose to use those functions smartly, by using my scripts!
 ***
 ## What about the *scripts-externalizer*, *loader* and *compiler*?
 
-**There is two way of utilising those scripts:**
+**There is three way of utilising those scripts:**
 
 * Externalize just the scripts you want with **scripts-loader**
 * Externalize all scripts including the default scripts with **scripts-externalizer**
