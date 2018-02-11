@@ -174,7 +174,7 @@ The **scripts-compiler** works even if you externalized ALL scripts. :)
 ***
 # Sample_project_1 and Sample_project_2
 
-Those projects is the projects I used as example, you can see how the scripts are managed in **Sample_project_1** with the method of **scripts-externalize** all scripts.
+Those projects are the projects I used as example, you can see how the scripts are managed in **Sample_project_1** with the method of **scripts-externalize** all scripts.
 
 You can see how the scripts are managed in **Sample_project_2** with the method of **scripts-loader** that loads just the scripts you want to externalize.
 
