@@ -160,7 +160,7 @@ Just add the "**scripts-compiler**" in your scripts (replace the "**scripts-load
 
 Launch the game, then close/open the project, and VOILA:
 
-![screenshot9](http://biloucorp.com/BCW/Joke/sample9.png)
+![screenshot](http://biloucorp.com/BCW/Joke/sample10.png)
 
 You can see the sub-folder is represented by the character "■" in front of the name. The "**scripts-externalizer**" understand those characters and creates the sub-folders corresponding!
 
