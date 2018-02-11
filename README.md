@@ -149,7 +149,7 @@ Don't worry, you will retrieve all the scripts in your favorite IDE :) :
 * The scripts with no name will be also exported and named "untitled", "untitled (2)" and so on
 * The scripts with the same name will be renamed "script (2)", script (3)" and so on
 
-
+***
 # Compiling the external scripts into the Scripts.rvdata2
 
 You can use the **scripts-compiler** to compile the content of your "**Scripts**" folder into the "**Scripts.rvdata2**"
@@ -171,6 +171,7 @@ The **scripts-compiler** works even if you externalized ALL scripts. :)
 * A backup of the Scripts.rvdata2 is created
 * The "**Scripts**" folder is now useless, but not deleted, you have to delete it by yourself if everything is fine
 
+***
 # Sample_project_1 and Sample_project_2
 
 Those projects is the projects I used as example, you can see how the scripts are managed in **Sample_project_1** with the method of **scripts-externalize** all scripts.
