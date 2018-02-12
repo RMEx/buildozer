@@ -152,7 +152,7 @@ Don't worry, you will retrieve all the scripts in your favorite IDE :) :
 ***
 # Compiling the external scripts into the Scripts.rvdata2
 
-You can use the **scripts-compiler** to compile the content of your "**Scripts**" folder into the "**Scripts.rvdata2**"
+You can use the **scripts-compiler** to compile the content of your "**Scripts**" folder into "**Scripts.rvdata2**"
 
 Just add the "**scripts-compiler**" in your scripts (replace the "**scripts-loader**" you used):
 
