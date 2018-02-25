@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #==============================================================================
-# ** scripts-loader
+# ** scripts-loader v1.1.0
 #------------------------------------------------------------------------------
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/scripts-externalizer
@@ -13,6 +13,16 @@
 # To add a folder: create a new folder, add the name of the folder in _list.rb
 # with a "/" to the end of the name, create a new _list.rb in the folder
 #==============================================================================
+
+module XT_CONFIG
+  #==============================================================================
+  # ** CONFIGURATION
+  #==============================================================================
+
+  LOAD_FROM = "Scripts"  # Load the scripts from the folder you want.
+                         # Can be "C:/.../MyScripts/" or "../../MyScripts/"
+
+end
 
 #==============================================================================
 # ** Loader
@@ -29,7 +39,7 @@ module Loader
   # * Run the loader
   #--------------------------------------------------------------------------
   def run
-    read_list("Scripts/")
+    read_list(XT_CONFIG::LOAD_FROM + "/")
   end
   #--------------------------------------------------------------------------
   # * Read a file
