@@ -5,8 +5,8 @@
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/scripts-externalizer
 #------------------------------------------------------------------------------
-# Externalizes all scripts from Data/Scripts.rvdata2
-# Creates a Scripts folder and load all scripts from it
+# Externalize all scripts from "Data/Scripts.rvdata2" to the given folder
+# See the README.md on GitHub!
 #==============================================================================
 
 module XT_CONFIG
@@ -17,6 +17,16 @@ module XT_CONFIG
   EXTRACT_TO = "Scripts"  # Extracts the scripts to the folder you want.
                           # Can be "C:/.../MyScripts/" or "../../MyScripts/"
 
+end
+
+#==============================================================================
+# ** CONFIGURATION
+#==============================================================================
+
+module XT_CONFIG
+
+  EXTRACT_TO = "Scripts"  # Extracts the scripts to the folder you want.
+                          # Can be "C:/.../MyScripts/" or "../../MyScripts/"
 end
 
 #==============================================================================
