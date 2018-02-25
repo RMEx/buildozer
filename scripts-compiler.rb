@@ -5,18 +5,18 @@
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/scripts-externalizer
 #------------------------------------------------------------------------------
-# Compile scripts from the given folder, to the "Scripts.rvdata2"
-# Scripts will be added in the same place you put this script
+# Compile scripts from the given folder to "Scripts.rvdata2", in the same place
+# as this one. See the README.md on GitHub!
+#==============================================================================
+
+#==============================================================================
+# ** CONFIGURATION
 #==============================================================================
 
 module XT_CONFIG
-  #==============================================================================
-  # ** CONFIGURATION
-  #==============================================================================
 
   COMPILE_FROM = "Scripts"  # Compile the scripts from the folder you want.
                             # Can be "C:/.../MyScripts/" or "../../MyScripts/"
-
 end
 
 #==============================================================================
