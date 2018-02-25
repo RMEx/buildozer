@@ -6,4 +6,3 @@ EvEx
 Commands
 Incubator
 Tools
-Doc
