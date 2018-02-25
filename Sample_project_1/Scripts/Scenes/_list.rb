@@ -2,9 +2,9 @@ Scene_Base
 Scene_Title
 Scene_Map
 Scene_MenuBase
-Scene_Menu (2)
+Scene_Menu
 Scene_ItemBase
-Scene_Item (2)
+Scene_Item
 Scene_Skill
 Scene_Equip
 Scene_Status
