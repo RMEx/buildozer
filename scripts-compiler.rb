@@ -1,13 +1,23 @@
 # -*- coding: utf-8 -*-
 #==============================================================================
-# ** scripts-compiler
+# ** scripts-compiler v1.1.0
 #------------------------------------------------------------------------------
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/scripts-externalizer
 #------------------------------------------------------------------------------
-# Compile scripts from the "Scripts" folder, to the "Scripts.rvdata2"
+# Compile scripts from the given folder, to the "Scripts.rvdata2"
 # Scripts will be added in the same place you put this script
 #==============================================================================
+
+module XT_CONFIG
+  #==============================================================================
+  # ** CONFIGURATION
+  #==============================================================================
+
+  COMPILE_FROM = "Scripts"  # Compile the scripts from the folder you want.
+                            # Can be "C:/.../MyScripts/" or "../../MyScripts/"
+
+end
 
 #==============================================================================
 # ** FileTools
@@ -124,13 +134,23 @@ module Compiler
   #--------------------------------------------------------------------------
   extend self
   #--------------------------------------------------------------------------
+  # * Get Scripts.rvdata2 path from Game.ini
+  #--------------------------------------------------------------------------
+  filename = './Game.ini'
+  section = 'Game'
+  key = 'Scripts'
+  buffer = [].pack('x256')
+  GetPrivateProfileString = Win32API.new('kernel32', 'GetPrivateProfileString', 'ppppip', 'i')
+  l = GetPrivateProfileString.call(section, key, nil, buffer, buffer.size, filename)
+  SCRIPTS = buffer[0, l]
+  #--------------------------------------------------------------------------
   # * Run the compiler
   #--------------------------------------------------------------------------
   def run
     return if cancel
     return if no_scripts
     open_rvdata2
-    read_list("Scripts/")
+    read_list(XT_CONFIG::COMPILE_FROM + "/")
     rewrite_rvdata2
     the_end
     exit
@@ -139,9 +159,9 @@ module Compiler
   # * Open Scripts.rvdata2
   #--------------------------------------------------------------------------
   def cancel
-    msg = "Compile scripts from the folder \"Scripts\" in the \"Scripts.rvdata2\"?
+    msg = "Compile scripts from the folder \"#{XT_CONFIG::COMPILE_FROM}\" in \"#{SCRIPTS}\"?
 
- (a backup for \"Scripts.rvdata2\" will be created in the \"Data\" folder)"
+ (a backup for \"#{SCRIPTS}\" will be created)"
     cp = Prompt.yes_no_cancel?("scripts-compiler", msg)
     if cp != :yes
       return true
@@ -152,8 +172,8 @@ module Compiler
   # * If the "Scripts" folder doesn't exists
   #--------------------------------------------------------------------------
   def no_scripts
-    if !Dir.exist?("Scripts")
-      msgbox "Cannot find the \"Scripts\" folder"
+    if !Dir.exist?("#{XT_CONFIG::COMPILE_FROM}")
+      msgbox "Cannot find \"#{XT_CONFIG::COMPILE_FROM}\""
       return true
     end
     false
@@ -163,12 +183,12 @@ module Compiler
   #--------------------------------------------------------------------------
   def open_rvdata2
     @depth = 1
-    @scripts = load_data 'Data/Scripts.rvdata2'
+    @scripts = load_data SCRIPTS
     @scripts.each_with_index do |script, i|
       @depth = 2 if script[1] == "▼ Modules"
       script[2] = Zlib::Inflate.inflate script[2]
       @target = i if script[2].include?("# ** scripts-compiler") ||
-        script[2].include?("Kernel.send(:load, 'Scripts/scripts-loader.rb')")
+        script[2].include?("Kernel.send(:load, '#{XT_CONFIG::COMPILE_FROM}/scripts-loader.rb')")
     end
   end
   #--------------------------------------------------------------------------
@@ -224,14 +244,15 @@ module Compiler
   #--------------------------------------------------------------------------
   def rewrite_rvdata2
     time = Time.now.strftime("%y%m%d-%H%M%S")
-    FileTools.copy("Data/Scripts.rvdata2", "Data/Scripts_backup-#{time}.rvdata2")
+    new_name = SCRIPTS.split('.').insert(1, "backup-#{time}.").join('')
+    FileTools.copy(SCRIPTS, new_name)
     @scripts.delete_if do |s|
       s[2].include?("# ** scripts-externalizer") ||
       s[2].include?("# ** scripts-loader") ||
       s[2].include?("# ** scripts-compiler")
     end
     @scripts.each {|s| s[2] = deflate(s[2])}
-    save_data(@scripts, "Data/Scripts.rvdata2")
+    save_data(@scripts, SCRIPTS)
   end
   #--------------------------------------------------------------------------
   # * Compress the content
@@ -251,11 +272,11 @@ module Compiler
       data_system.battle_end_me.play
     rescue
     end
-    msgbox "All scripts compiled into \"Scripts.rvdata2\"! \\o/
+    msgbox "All scripts compiled into \"#{SCRIPTS}\"! \\o/
 
-Now close and open the project again and enjoy your scripts! :)
+Now CLOSE AND OPEN THE PROJECT and enjoy your scripts! :)
 
-And I leave you the responsibility to delete the \"Scripts\" folder which is supposed to no longer serve!
+And I leave you the responsibility to delete \"#{XT_CONFIG::COMPILE_FROM}\" which is supposed to no longer serve!
 
 Thanks you for using this script! <3
 
