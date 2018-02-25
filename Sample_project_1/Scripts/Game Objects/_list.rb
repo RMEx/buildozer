@@ -12,7 +12,7 @@ Game_BaseItem
 Game_Action
 Game_ActionResult
 Game_BattlerBase
-Game_Battler (2)
+Game_Battler
 Game_Actor
 Game_Enemy
 Game_Actors
@@ -22,7 +22,7 @@ Game_Troop
 Game_Map
 Game_CommonEvent
 Game_CharacterBase
-Game_Character (2)
+Game_Character
 Game_Player
 Game_Follower
 Game_Followers
