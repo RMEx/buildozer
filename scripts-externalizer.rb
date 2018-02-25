@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #==============================================================================
-# ** scripts-externalizer
+# ** scripts-externalizer v1.1.0
 #------------------------------------------------------------------------------
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/scripts-externalizer
@@ -8,6 +8,16 @@
 # Externalizes all scripts from Data/Scripts.rvdata2
 # Creates a Scripts folder and load all scripts from it
 #==============================================================================
+
+module XT_CONFIG
+  #==============================================================================
+  # ** CONFIGURATION
+  #==============================================================================
+
+  EXTRACT_TO = "Scripts"  # Extracts the scripts to the folder you want.
+                          # Can be "C:/.../MyScripts/" or "../../MyScripts/"
+
+end
 
 #==============================================================================
 # ** FileTools
@@ -124,6 +134,24 @@ module Externalizer
   #--------------------------------------------------------------------------
   extend self
   #--------------------------------------------------------------------------
+  # * Get Scripts.rvdata2 path from Game.ini
+  #--------------------------------------------------------------------------
+  filename = './Game.ini'
+  section = 'Game'
+  key = 'Scripts'
+  buffer = [].pack('x256')
+  GetPrivateProfileString = Win32API.new('kernel32', 'GetPrivateProfileString', 'ppppip', 'i')
+  l = GetPrivateProfileString.call(section, key, nil, buffer, buffer.size, filename)
+  SCRIPTS = buffer[0, l]
+  #--------------------------------------------------------------------------
+  # * Get the name of the game from Game.ini
+  #--------------------------------------------------------------------------
+  key = 'Title'
+  buffer = [].pack('x256')
+  GetPrivateProfileString = Win32API.new('kernel32', 'GetPrivateProfileString', 'ppppip', 'i')
+  l = GetPrivateProfileString.call(section, key, nil, buffer, buffer.size, filename)
+  NAME = buffer[0, l]
+  #--------------------------------------------------------------------------
   # * Run externalization
   #--------------------------------------------------------------------------
   def run
@@ -140,7 +168,7 @@ module Externalizer
   # * Open Scripts.rvdata2
   #--------------------------------------------------------------------------
   def open_rvdata2
-    @scripts = load_data 'Data/Scripts.rvdata2'
+    @scripts = load_data SCRIPTS
     n = 1
     @scripts.each do |script|
       script[2] = Zlib::Inflate.inflate script[2]
@@ -161,9 +189,9 @@ module Externalizer
   # * Open Scripts.rvdata2
   #--------------------------------------------------------------------------
   def cancel
-    msg = "Externalize all scripts to the folder \"Scripts\"?
+    msg = "Externalize all scripts to \"#{XT_CONFIG::EXTRACT_TO}\"?
 
- (a backup for \"Scripts.rvdata2\" will be created in the \"Data\" folder)"
+ (a backup for \"#{SCRIPTS}\" will be created)"
     cp = Prompt.yes_no_cancel?("scripts-externalizer", msg)
     if cp != :yes
       return true
@@ -184,30 +212,33 @@ module Externalizer
   # * Open Scripts.rvdata2
   #--------------------------------------------------------------------------
   def folder_exist
-    if Dir.exist?("Scripts")
-      msg = "The folder \"Scripts\" allready exist, do you want to overwrite it?"
-      cp = Prompt.yes_no_cancel?("Externalization", msg)
-      if cp != :yes
+    dir = XT_CONFIG::EXTRACT_TO.gsub(/\//, '\\')
+    if Dir.exist?(dir)
+      msg = "The folder \"#{dir}\" allready exist, do you want to overwrite it?"
+      cp = Prompt.yes_no_cancel?(NAME, msg)
+      if cp == :yes
+        FileTools.rmdir dir
+        Graphics.update while Dir.exist?(dir)
+      else
         return true
       end
     end
+    system("mkdir #{dir}")
+    Graphics.update until Dir.exist?(dir)
     false
   end
   #--------------------------------------------------------------------------
   # * Externalize the scripts
   #--------------------------------------------------------------------------
   def externalize
-    @dir = ['Scripts']
+    @dir = [XT_CONFIG::EXTRACT_TO]
     @list = Hash.new
     @count = Hash.new
-    FileTools.rmdir @dir[0]
-    Graphics.update while Dir.exist?(@dir[0])
-    Dir.mkdir @dir[0]
     @scripts.each {|s| externalize_script(s)}
     @list.each do |path, list|
       FileTools.write(path + "/_list.rb", list.join("\n"))
     end
-    FileTools.write("Scripts/scripts-loader.rb", scripts_loader)
+    FileTools.write(XT_CONFIG::EXTRACT_TO + "/scripts-loader.rb", scripts_loader)
   end
   #--------------------------------------------------------------------------
   # * Externalize one script
@@ -232,7 +263,7 @@ module Externalizer
     else
       return false
     end
-    Dir.mkdir @dir.join "/"
+    Dir.mkdir(@dir.join("/"))
     if s[2] != ""
       s[1] = " " * ((@dir.length - 2) * 3) + s[1]
       write_script(s)
@@ -289,14 +320,15 @@ module Externalizer
   #--------------------------------------------------------------------------
   def rewrite_rvdata2
     time = Time.now.strftime("%y%m%d-%H%M%S")
-    FileTools.copy("Data/Scripts.rvdata2", "Data/Scripts_backup-#{time}.rvdata2")
+    new_name = SCRIPTS.split('.').insert(1, "_backup-#{time}.").join('')
+    FileTools.copy(SCRIPTS, new_name)
     new_rvdata = [
       [
-        0, "scripts-loader",
-        deflate("Kernel.send(:load, 'Scripts/scripts-loader.rb')")
+        0, "Load scripts",
+        deflate("Kernel.send(:load, '#{XT_CONFIG::EXTRACT_TO}/scripts-loader.rb')")
       ]
     ]
-    save_data(new_rvdata, "Data/Scripts.rvdata2")
+    save_data(new_rvdata, SCRIPTS)
   end
   #--------------------------------------------------------------------------
   # * Compress the content
@@ -316,9 +348,9 @@ module Externalizer
       data_system.battle_end_me.play
     rescue
     end
-    msgbox "All scripts externalized to \"Scripts\" folder! \\o/
+    msgbox "All scripts externalized to \"#{XT_CONFIG::EXTRACT_TO}\" folder! \\o/
 
-Now close and open the project again and enjoy your scripts! :)
+Now CLOSE AND OPEN THE PROJECT and enjoy your scripts! :)
 
 Thanks you for using this script! <3
 
@@ -330,7 +362,7 @@ BilouMaster Joke"
   def scripts_loader
 "# -*- coding: utf-8 -*-
 #==============================================================================
-# ** ORMS Converter
+# ** ORMS Converter v1.1.0
 #------------------------------------------------------------------------------
 # By Joke @biloumaster <joke@biloucorp.com>
 # GitHub: https://github.com/RMEx/scripts-externalizer
@@ -343,6 +375,16 @@ BilouMaster Joke"
 # To add a folder: create a new folder, add the name of the folder in _list.rb
 # with a \"/\" to the end of the name, create a new _list.rb in the folder
 #==============================================================================
+
+module XT_CONFIG
+  #==============================================================================
+  # ** CONFIGURATION
+  #==============================================================================
+
+  LOAD_FROM = \"#{XT_CONFIG::EXTRACT_TO}\"  # Load the scripts from the folder you want.
+                           # Can be \"C:/.../MyScripts/\" or \"../../MyScripts/\"
+
+end
 
 #==============================================================================
 # ** Loader
@@ -359,7 +401,7 @@ module Loader
   # * Run the loader
   #--------------------------------------------------------------------------
   def run
-    read_list(\"Scripts/\")
+    read_list(XT_CONFIG::LOAD_FROM + \"/\")
   end
   #--------------------------------------------------------------------------
   # * Read a file
