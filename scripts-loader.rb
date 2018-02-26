@@ -6,7 +6,7 @@
 # GitHub: https://github.com/RMEx/scripts-externalizer
 #------------------------------------------------------------------------------
 # Load all scripts from the given folder
-# See the README.md on GitHub!
+# See the README.md on GitHub! 
 #==============================================================================
 
 #==============================================================================
