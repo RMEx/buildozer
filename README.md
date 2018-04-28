@@ -13,7 +13,7 @@
 * It's a pain in the ass to open/close the script editor each time you want to change a little thing in your script.
 * When you want to see how the default scripts works, and what method to overwrite, you are obliged to open the script editor. It's akward when you are actually using your favorite IDE. (I'm used to copy/paste from the script editor to the IDE when I'm working on scripts)
 * The script editor is limited when you are used to actual IDE, you miss a bunch of shortcut and a more readable interface
-* Some scripts like [the great RME](https://github.com/RMEx/RME) are divided into multiple scripts (it's way clearer when the hole script is very big)... well, do you want to copy/paste like 14 scripts into the script editor one by one?
+* Some scripts like [the great RME](https://github.com/RMEx/RME) are divided into multiple scripts (it's way clearer when the whole script is very big)... well, do you want to copy/paste like 14 scripts into the script editor one by one?
 
 ***
 ## What is externalization?
