@@ -56,7 +56,7 @@ module FileTools
   # * Create a folder
   #--------------------------------------------------------------------------
   def mkdir(d)
-    unless Dir.exist?(d)
+    unless File.directory?(d)
       Dir.mkdir(d)
     end
   end
@@ -64,7 +64,7 @@ module FileTools
   # * Remove a folder
   #--------------------------------------------------------------------------
   def rmdir(d, v=false)
-    if Dir.exist?(d)
+    if File.directory?(d)
       begin delete_all(d)
       rescue Errno::ENOTEMPTY
       end
@@ -155,6 +155,7 @@ module Externalizer
   # * Run externalization
   #--------------------------------------------------------------------------
   def run
+    identifyType
     open_rvdata2
     return if cancel
     return if allready_externalized
@@ -203,7 +204,8 @@ module Externalizer
   #--------------------------------------------------------------------------
   def allready_externalized
     if @scripts.length == 1
-      msgbox "Scripts are allready externalized... operation canceled."
+      msgbox "Scripts are allready externalized... operation canceled." if @scriptType == "rv2"
+      print "Scripts are allready externalized... operation canceled." if scriptType == "rx"
       return true
     end
     false
@@ -213,18 +215,18 @@ module Externalizer
   #--------------------------------------------------------------------------
   def folder_exist
     dir = XT_CONFIG::EXTRACT_TO.gsub(/\//, '\\')
-    if Dir.exist?(dir)
+    if File.directory?(dir)
       msg = "The folder \"#{dir}\" allready exist, do you want to overwrite it?"
       cp = Prompt.yes_no_cancel?(NAME, msg)
       if cp == :yes
         FileTools.rmdir dir
-        Graphics.update while Dir.exist?(dir)
+        Graphics.update while File.directory?(dir)
       else
         return true
       end
     end
     system("mkdir #{dir}")
-    Graphics.update until Dir.exist?(dir)
+    Graphics.update until File.directory?(dir)
     false
   end
   #--------------------------------------------------------------------------
@@ -344,17 +346,24 @@ module Externalizer
   #--------------------------------------------------------------------------
   def the_end
     begin
-      data_system = load_data("Data/System.rvdata2")
-      data_system.battle_end_me.play
+      if @scriptType == "rv2"
+        data_system = load_data("Data/System.rvdata2")
+        data_system.battle_end_me.play
+      end
     rescue
     end
-    msgbox "All scripts externalized to \"#{XT_CONFIG::EXTRACT_TO}\" folder! \\o/
+    messageText = "All scripts externalized to \"#{XT_CONFIG::EXTRACT_TO}\" folder! \\o/
 
 Now CLOSE AND OPEN THE PROJECT and enjoy your scripts! :)
 
 Thanks you for using this script! <3
 
 BilouMaster Joke"
+    if @scriptType == "rx"
+      print messageText +" and Gustavo Sasaki"
+      return
+    end
+    msgbox messageText
   end
   #--------------------------------------------------------------------------
   # * Epic string script
@@ -427,6 +436,21 @@ module Loader
 end
 
 Loader.run"
+  end
+  #--------------------------------------------------------------------------
+  # * Identify type of script
+  #--------------------------------------------------------------------------
+  def identifyType()
+    Dir.foreach(Dir.pwd + "\\Data") {|x|
+      if x == "Scripts.rxdata"
+        @scriptType = "rx"
+        return
+      elsif x =="Scripts.rvdata2"
+        @scriptType = "rv2"
+        return
+      end
+    }
+    @scriptType = "error" #error, no type suported
   end
 end
 

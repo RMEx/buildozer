@@ -34,6 +34,7 @@ module Loader
   # * Run the loader
   #--------------------------------------------------------------------------
   def run
+    identifyType() 
     read_list(XT_CONFIG::LOAD_FROM + "/")
   end
   #--------------------------------------------------------------------------
@@ -49,13 +50,30 @@ module Loader
     @list = read(path + "_list.rb").split("\n")
     @list.each do |e|
       e.strip!
-      next if e[0] == "#"
-      if e[-1] == "/"
-        read_list(path + e)
+      next if e[0] == 35 || e[0] == "#"
+      if e[-1] == 103 || e[-1] == "/"
+        read_list(path + e) if @scriptType == "rv2"
+        #rpg maker xp dont suport sub folder of scripts
+        return if @scriptType == "error" || @scriptType == "rx" 
       else
-        Kernel.send(:load, path + e + ".rb")
+        Kernel.send(:load, Dir.pwd + "/" + path + e + ".rb")
       end
     end
+  end
+  #--------------------------------------------------------------------------
+  # * Identify type of script
+  #--------------------------------------------------------------------------
+  def identifyType()
+    Dir.foreach(Dir.pwd + "\\Data") {|x|
+      if x == "Scripts.rxdata"
+        @scriptType = "rx"
+        return
+      elsif x =="Scripts.rvdata2"
+        @scriptType = "rv2"
+        return
+      end
+    }
+    @scriptType = "error" #error, no type suported
   end
 end
 

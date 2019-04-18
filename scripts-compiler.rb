@@ -56,7 +56,7 @@ module FileTools
   # * Create a folder
   #--------------------------------------------------------------------------
   def mkdir(d)
-    unless Dir.exist?(d)
+    unless File.directory?(d)
       Dir.mkdir(d)
     end
   end
@@ -64,7 +64,7 @@ module FileTools
   # * Remove a folder
   #--------------------------------------------------------------------------
   def rmdir(d, v=false)
-    if Dir.exist?(d)
+    if File.directory?(d)
       begin delete_all(d)
       rescue Errno::ENOTEMPTY
       end
@@ -147,12 +147,14 @@ module Compiler
   # * Run the compiler
   #--------------------------------------------------------------------------
   def run
+    identifyType()
     return if cancel
     return if no_scripts
+    @target = []
     open_rvdata2
     read_list(XT_CONFIG::COMPILE_FROM + "/")
     rewrite_rvdata2
-    the_end
+    the_end()
     exit
   end
   #--------------------------------------------------------------------------
@@ -172,8 +174,9 @@ module Compiler
   # * If the "Scripts" folder doesn't exists
   #--------------------------------------------------------------------------
   def no_scripts
-    if !Dir.exist?("#{XT_CONFIG::COMPILE_FROM}")
-      msgbox "Cannot find \"#{XT_CONFIG::COMPILE_FROM}\""
+    if !File.directory?("#{XT_CONFIG::COMPILE_FROM}")
+      msgbox "Cannot find \"#{XT_CONFIG::COMPILE_FROM}\"" if @scriptType == "rv2"
+      print "Cannot find \"#{XT_CONFIG::COMPILE_FROM}\"" if @scriptType == "rx"
       return true
     end
     false
@@ -187,8 +190,10 @@ module Compiler
     @scripts.each_with_index do |script, i|
       @depth = 2 if script[1] == "▼ Modules"
       script[2] = Zlib::Inflate.inflate script[2]
-      @target = i if script[2].include?("# ** scripts-compiler") ||
+      if @scriptType == "rv2"
+        @target = i if script[2].include?("# ** scripts-compiler") ||
         script[2].include?("Kernel.send(:load, '#{XT_CONFIG::COMPILE_FROM}/scripts-loader.rb')")
+      end
     end
   end
   #--------------------------------------------------------------------------
@@ -198,15 +203,19 @@ module Compiler
     @list = FileTools.read(path + "_list.rb").split("\n")
     @list.each do |e|
       e.strip!
-      next if e[0] == "#"
-      if e[-1] == "/"
+      next if e[0] == 35 || e[0] == "#"
+      if  e[-1] == 103 || e[-1] == "/"
+        next if @scriptType == "rx"
         @depth += 1
         add_category(e)
         read_list(path + e)
         @depth -= 1
       else
         file = FileTools.read(path + e + ".rb")
-        add_script(e, file)
+        position =remove_old_scripts(e)
+
+        add_script(e, file, position) if @scriptType == "rx"
+        add_scriptRv2(e,file) if @scriptType == "rv2"
       end
     end
   end
@@ -217,26 +226,33 @@ module Compiler
     name = name.clone.delete "/"
     if @depth == 2
       name.insert(0, '▼ ')
-      add_script("", "")
-      add_script(name, "")
+      add_scriptRv2("", "")
+      add_scriptRv2(name, "")
     else
       @depth -= 1
       name.insert(0, '■ ')
-      add_script(name, "")
+      add_scriptRv2(name, "")
       @depth += 1
     end
   end
   #--------------------------------------------------------------------------
   # * Add a script
   #--------------------------------------------------------------------------
-  def add_script(name, content)
+  def add_script(name, content,position)
     name.insert(0, " " * [(@depth - 2) * 3, 0].max) unless name == ""
     content = content.split("\n")
     if content.is_a?(Array)
       content.delete("# -*- coding: utf-8 -*-")
       content = content.join("\n")
     end
-    @scripts.insert(@target, [0, name, content])
+
+    @scripts.insert(position, [0, name, content])
+  end
+  #--------------------------------------------------------------------------
+  # * Add a script for rvdata2 script
+  #--------------------------------------------------------------------------
+  def add_scriptRv2(name, content)
+    add_script(name, content,@target)
     @target += 1
   end
   #--------------------------------------------------------------------------
@@ -247,11 +263,15 @@ module Compiler
     new_name = SCRIPTS.split('.').insert(1, "backup-#{time}.").join('')
     FileTools.copy(SCRIPTS, new_name)
     @scripts.delete_if do |s|
+      (s == nil) ||
       s[2].include?("# ** scripts-externalizer") ||
       s[2].include?("# ** scripts-loader") ||
-      s[2].include?("# ** scripts-compiler")
+      s[2].include?("# ** scripts-compiler")|| 
+      (s[1] == "")
     end
-    @scripts.each {|s| s[2] = deflate(s[2])}
+
+    @scripts.each {|s| 
+    s[2] = deflate(s[2])}
     save_data(@scripts, SCRIPTS)
   end
   #--------------------------------------------------------------------------
@@ -266,21 +286,61 @@ module Compiler
   #--------------------------------------------------------------------------
   # * Epic END
   #--------------------------------------------------------------------------
-  def the_end
+  def the_end()
     begin
-      data_system = load_data("Data/System.rvdata2")
-      data_system.battle_end_me.play
+      if @scriptType == "rv2"
+        data_system = load_data("Data/System.rvdata2")
+        data_system.battle_end_me.play
+      end
     rescue
     end
-    msgbox "All scripts compiled into \"#{SCRIPTS}\"! \\o/
-
-Now CLOSE AND OPEN THE PROJECT and enjoy your scripts! :)
-
-And I leave you the responsibility to delete \"#{XT_CONFIG::COMPILE_FROM}\" which is supposed to no longer serve!
-
-Thanks you for using this script! <3
-
-BilouMaster Joke"
+    messageText = "All scripts compiled into \"#{SCRIPTS}\"! \\o/
+    Now CLOSE AND OPEN THE PROJECT and enjoy your scripts! :)
+    
+    And I leave you the responsibility to delete \"#{XT_CONFIG::COMPILE_FROM}\" which is supposed to no longer serve!
+    
+    Thanks you for using this script! <3
+    
+    BilouMaster Joke"
+    if @scriptType == "rx"
+      print messageText +" and Gustavo Sasaki"
+      return
+    end
+    msgbox messageText
+  end
+  #--------------------------------------------------------------------------
+  # * Remove old version of the script that will be compiled and retuned his index
+  #--------------------------------------------------------------------------
+  def remove_old_scripts(e)
+    i=-1
+    index = -1
+    @scripts.delete_if do |s|
+      i+=1
+      if(s != nil) && (e == s[1])
+          index = i
+      end
+      (s == nil) ||
+      s[2].include?("# ** scripts-externalizer") ||
+      s[2].include?("# ** scripts-loader") ||
+      s[2].include?("# ** scripts-compiler")|| 
+      (e == s[1])
+    end
+    return index
+  end
+  #--------------------------------------------------------------------------
+  # * Identify type of script
+  #--------------------------------------------------------------------------
+  def identifyType()
+    Dir.foreach(Dir.pwd + "\\Data") {|x|
+      if x == "Scripts.rxdata"
+        @scriptType = "rx"
+        return
+      elsif x =="Scripts.rvdata2"
+        @scriptType = "rv2"
+        return
+      end
+    }
+    @scriptType = "error" #error, no type suported
   end
 end
 
