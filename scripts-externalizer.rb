@@ -236,6 +236,9 @@ module Externalizer
     @dir = [XT_CONFIG::EXTRACT_TO]
     @list = Hash.new
     @count = Hash.new
+    if @scriptType == "rx"
+      @lastScript = @scripts.last
+    end
     @scripts.each {|s| externalize_script(s)}
     @list.each do |path, list|
       FileTools.write(path + "/_list.rb", list.join("\n"))
@@ -327,9 +330,15 @@ module Externalizer
     new_rvdata = [
       [
         0, "Load scripts",
-        deflate("Kernel.send(:load, '#{XT_CONFIG::EXTRACT_TO}/scripts-loader.rb')")
+        deflate("Kernel.send(:load,Dir.pwd+ \"/\" +'#{XT_CONFIG::EXTRACT_TO}/scripts-loader.rb')")
       ]
     ]
+    if @scriptType == "rx"
+      new_rvdata.push(
+        [1, @lastScript[1],
+        deflate("Kernel.send(:load,Dir.pwd+ \"/\" +'#{XT_CONFIG::EXTRACT_TO}/#{@lastScript[1]}.rb')")
+      ])
+    end
     save_data(new_rvdata, SCRIPTS)
   end
   #--------------------------------------------------------------------------
@@ -360,7 +369,7 @@ Thanks you for using this script! <3
 
 BilouMaster Joke"
     if @scriptType == "rx"
-      print messageText +" and Gustavo Sasaki"
+      print messageText +" and Gustavo S. Roncaglia"
       return
     end
     msgbox messageText
@@ -385,6 +394,7 @@ BilouMaster Joke"
 # with a \"/\" to the end of the name, create a new _list.rb in the folder
 #==============================================================================
 
+
 module XT_CONFIG
   #==============================================================================
   # ** CONFIGURATION
@@ -392,7 +402,6 @@ module XT_CONFIG
 
   LOAD_FROM = \"#{XT_CONFIG::EXTRACT_TO}\"  # Load the scripts from the folder you want.
                            # Can be \"C:/.../MyScripts/\" or \"../../MyScripts/\"
-
 end
 
 #==============================================================================
@@ -410,6 +419,7 @@ module Loader
   # * Run the loader
   #--------------------------------------------------------------------------
   def run
+    identifyType() 
     read_list(XT_CONFIG::LOAD_FROM + \"/\")
   end
   #--------------------------------------------------------------------------
@@ -425,13 +435,30 @@ module Loader
     @list = read(path + \"_list.rb\").split(\"\\n\")
     @list.each do |e|
       e.strip!
-      next if e[0] == \"#\"
-      if e[-1] == \"/\"
-        read_list(path + e)
+      next if e[0] == 35 || e[0] == \"#\"
+      if e[-1] == 103 || e[-1] == \"/\"
+        read_list(path + e) if @scriptType == \"rv2\"
+        #rpg maker xp dont suport sub folder of scripts
+        return if @scriptType == \"error\" || @scriptType == \"rx\" 
       else
-        Kernel.send(:load, path + e + \".rb\")
+        Kernel.send(:load, Dir.pwd + \"/\" +  path + e + \".rb\")
       end
     end
+  end
+  #--------------------------------------------------------------------------
+  # * Identify type of script
+  #--------------------------------------------------------------------------
+  def identifyType()
+    Dir.foreach(Dir.pwd + \"\\\\Data\") {|x|
+      if x == \"Scripts.rxdata\"
+        @scriptType = \"rx\"
+        return
+      elsif x ==\"Scripts.rvdata2\"
+        @scriptType = \"rv2\"
+        return
+      end
+    }
+    @scriptType = \"error\" #error, no type suported
   end
 end
 
